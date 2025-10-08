@@ -1,0 +1,89 @@
+name: Agent 1 - Address PR Feedback
+
+on:
+  pull_request_review:
+    types: [submitted]
+  pull_request_review_comment:
+    types: [created]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  address-feedback:
+    # Only run if @copilot is mentioned and it's on a PR
+    if: |
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@copilot')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@copilot')) ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@copilot'))
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Get PR number
+        id: get-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber;
+            if (context.eventName === 'pull_request_review' || context.eventName === 'pull_request_review_comment') {
+              prNumber = context.payload.pull_request.number;
+            } else if (context.eventName === 'issue_comment') {
+              prNumber = context.payload.issue.number;
+            }
+            return prNumber;
+          result-encoding: string
+
+      - name: Add comment to acknowledge feedback
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.get-pr.outputs.result }};
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: '🤖 Agent 1: Received feedback. I will address the requested changes.\n\n@copilot Please address the review feedback in the comments above.'
+            });
+
+      - name: Get feedback details
+        id: feedback
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.get-pr.outputs.result }};
+            
+            // Get all review comments
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            // Find change requests
+            const changeRequests = reviews.filter(r => r.state === 'CHANGES_REQUESTED');
+            
+            return {
+              prNumber: prNumber,
+              hasChangeRequests: changeRequests.length > 0,
+              changeRequests: changeRequests,
+              allComments: comments
+            };
+
+      - name: Summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const feedback = ${{ steps.feedback.outputs.result }};
+            console.log('Feedback received:', JSON.stringify(feedback, null, 2));
+            console.log('Agent 1 has been notified to address the feedback');

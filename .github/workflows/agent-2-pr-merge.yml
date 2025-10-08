@@ -1,0 +1,152 @@
+name: Agent 2 - PR Merge and Issue Management
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  handle-merge:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Extract issue number
+        id: extract-issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            
+            // Look for "Closes #123" or "Fixes #123" pattern
+            const match = body.match(/(?:Closes|Fixes|Resolves)\s+#(\d+)/i);
+            if (match) {
+              return match[1];
+            }
+            
+            // Check if branch name contains issue number
+            const branchMatch = pr.head.ref.match(/issue-(\d+)/);
+            if (branchMatch) {
+              return branchMatch[1];
+            }
+            
+            return null;
+          result-encoding: string
+
+      - name: Mark issue as completed
+        if: steps.extract-issue.outputs.result != 'null'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = parseInt('${{ steps.extract-issue.outputs.result }}');
+            
+            // Add "completed" label
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['completed']
+              });
+            } catch (error) {
+              console.log('Note: completed label may not exist yet:', error.message);
+            }
+            
+            // Remove "ready" label if present
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                name: 'ready'
+              });
+            } catch (error) {
+              console.log('Note: ready label may not be present:', error.message);
+            }
+            
+            // Close the issue
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              state: 'closed'
+            });
+            
+            // Add completion comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `✅ This issue has been completed and merged in PR #${context.payload.pull_request.number}.`
+            });
+
+      - name: Check for dependent issues
+        if: steps.extract-issue.outputs.result != 'null'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const completedIssue = parseInt('${{ steps.extract-issue.outputs.result }}');
+            
+            // Get all open issues
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+            
+            // Look for issues that depend on the completed issue
+            for (const issue of issues) {
+              const body = issue.body || '';
+              
+              // Check for "Depends on #123" or "Blocked by #123" pattern
+              const dependsMatch = body.match(/(?:Depends on|Blocked by|Requires)\s+#(\d+)/i);
+              if (dependsMatch && parseInt(dependsMatch[1]) === completedIssue) {
+                console.log(`Found dependent issue #${issue.number}`);
+                
+                // Check if all dependencies are completed
+                const allDeps = [...body.matchAll(/(?:Depends on|Blocked by|Requires)\s+#(\d+)/gi)];
+                let allCompleted = true;
+                
+                for (const dep of allDeps) {
+                  const depNumber = parseInt(dep[1]);
+                  const { data: depIssue } = await github.rest.issues.get({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: depNumber
+                  });
+                  
+                  if (depIssue.state !== 'closed') {
+                    allCompleted = false;
+                    break;
+                  }
+                }
+                
+                // If all dependencies are completed, mark this issue as ready
+                if (allCompleted) {
+                  try {
+                    await github.rest.issues.addLabels({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issue.number,
+                      labels: ['ready']
+                    });
+                    
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issue.number,
+                      body: `🚀 This issue is now unblocked! All dependencies have been completed. Issue #${completedIssue} has been resolved.`
+                    });
+                    
+                    console.log(`Marked issue #${issue.number} as ready`);
+                  } catch (error) {
+                    console.log('Error updating dependent issue:', error.message);
+                  }
+                }
+              }
+            }
