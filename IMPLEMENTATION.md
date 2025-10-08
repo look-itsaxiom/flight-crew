@@ -41,7 +41,8 @@ flight-crew-poc/
 #### `agent-1-issue-completion.yml`
 - **Triggers**: When issue is labeled "ready"
 - **Actions**:
-  - Assigns @copilot to the issue
+  - For first issues: Provides instructions to manually assign @copilot
+  - For dependent issues: Automatically assigns @copilot
   - GitHub Copilot Workspace handles PR creation automatically
   - Comments on issue to confirm assignment
 
@@ -52,11 +53,12 @@ flight-crew-poc/
   - GitHub Copilot handles feedback automatically through Workspace
 
 #### `agent-2-pr-review.yml`
-- **Triggers**: PR opened, updated, or reopened
+- **Triggers**: PR opened, updated, or reopened; check suite completed
 - **Actions**:
-  - Retrieves PR details and files
-  - Comments on PR status (changes detected or waiting)
-  - GitHub Copilot handles its own reviews
+  - Retrieves PR details and reviews changed files
+  - Provides feedback by tagging @copilot if improvements are needed
+  - When all checks pass and PR is ready, automatically merges to develop
+  - Skips commenting if everything looks good
 
 #### `agent-2-pr-merge.yml`
 - **Triggers**: PR closed (merged)
@@ -65,7 +67,7 @@ flight-crew-poc/
   - Closes and labels issue as "completed"
   - Removes "ready" label
   - Scans for dependent issues
-  - Unblocks dependent issues automatically
+  - Unblocks dependent issues by labeling them "ready" and assigning @copilot
 
 ### 2. Agent Instructions (2 files)
 

@@ -1,16 +1,19 @@
-name: Agent 2 - PR Review
+name: Agent 2 - PR Review and Merge
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  # Also trigger on check runs completing
+  check_suite:
+    types: [completed]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   issues: write
 
 jobs:
-  review-pr:
+  review-and-merge:
     runs-on: ubuntu-latest
     
     steps:
@@ -20,30 +23,43 @@ jobs:
           fetch-depth: 0
 
       - name: Get PR details and review
-        id: pr-details
+        id: pr-review
         uses: actions/github-script@v7
         with:
           script: |
+            let prNumber;
+            
+            // Get PR number from context
+            if (context.payload.pull_request) {
+              prNumber = context.payload.pull_request.number;
+            } else if (context.payload.check_suite && context.payload.check_suite.pull_requests.length > 0) {
+              prNumber = context.payload.check_suite.pull_requests[0].number;
+            } else {
+              console.log('No PR found in context');
+              return { shouldMerge: false };
+            }
+            
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number
+              pull_number: prNumber
             });
             
             const { data: files } = await github.rest.pulls.listFiles({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number
+              pull_number: prNumber
             });
             
             console.log(`PR #${pr.number}: ${pr.title}`);
             console.log(`Files changed: ${files.length}`);
+            console.log(`PR state: ${pr.state}, mergeable: ${pr.mergeable}, merged: ${pr.merged}`);
             
             // Simple review logic:
             // - If no files changed, ask copilot to make changes
-            // - If files changed, acknowledge and let it proceed
-            // Agent 2 can provide feedback by commenting and tagging @copilot if needed
-            // But it's not required - if everything looks fine, it can stay silent
+            // - If files changed and checks pass, prepare to merge
+            // - Agent 2 can provide feedback by commenting and tagging @copilot if needed
+            // - But it's not required - if everything looks fine, just merge
             
             if (files.length === 0) {
               await github.rest.issues.createComment({
@@ -52,15 +68,101 @@ jobs:
                 issue_number: pr.number,
                 body: '🤖 Agent 2: No changes detected in this PR yet. @copilot please implement the changes.'
               });
-            } else {
-              // PR has changes - Agent 2 could review and provide feedback here if needed
-              // For now, we'll let it proceed without comment if everything looks okay
-              console.log('Changes detected - proceeding without comment');
+              return { shouldMerge: false, prNumber };
             }
+            
+            // Check if PR is ready to merge
+            // PR should be open, not merged, and mergeable
+            if (pr.state === 'open' && !pr.merged && pr.mergeable !== false) {
+              // Check if all status checks have passed
+              const { data: statuses } = await github.rest.repos.getCombinedStatusForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha
+              });
+              
+              // Check check runs as well
+              const { data: checkRuns } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha
+              });
+              
+              console.log(`Combined status state: ${statuses.state}`);
+              console.log(`Check runs: ${checkRuns.total_count}`);
+              
+              const allChecksPassed = checkRuns.check_runs.every(run => 
+                run.status === 'completed' && (run.conclusion === 'success' || run.conclusion === 'neutral' || run.conclusion === 'skipped')
+              );
+              
+              const statusOk = statuses.state === 'success' || statuses.total_count === 0;
+              
+              if (allChecksPassed && statusOk) {
+                console.log('All checks passed - PR is ready to merge');
+                return { shouldMerge: true, prNumber };
+              } else {
+                console.log('Checks not all passed yet - waiting');
+                return { shouldMerge: false, prNumber };
+              }
+            }
+            
+            return { shouldMerge: false, prNumber };
 
-      - name: Check PR status
+      - name: Merge PR to develop
+        if: fromJSON(steps.pr-review.outputs.result).shouldMerge == true
         uses: actions/github-script@v7
         with:
           script: |
-            const pr = context.payload.pull_request;
-            console.log(`PR #${pr.number} review completed`);
+            const result = ${{ steps.pr-review.outputs.result }};
+            const prNumber = result.prNumber;
+            
+            try {
+              // Get the default branch or use 'develop' if it exists
+              const { data: repo } = await github.rest.repos.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+              
+              // Try to get develop branch, otherwise use default branch
+              let targetBranch = repo.default_branch;
+              try {
+                await github.rest.repos.getBranch({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  branch: 'develop'
+                });
+                targetBranch = 'develop';
+              } catch (e) {
+                console.log('develop branch not found, using default branch:', targetBranch);
+              }
+              
+              // Merge the PR
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                merge_method: 'squash', // or 'merge' or 'rebase'
+                commit_title: `Merge PR #${prNumber}`,
+                commit_message: 'Automatically merged by Agent 2'
+              });
+              
+              console.log(`✓ Successfully merged PR #${prNumber} to ${targetBranch}`);
+              
+              // Add a comment to the PR
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `✅ Agent 2: All checks passed. PR has been merged to ${targetBranch}.`
+              });
+            } catch (error) {
+              console.error('Failed to merge PR:', error.message);
+              
+              // If merge fails, comment on the PR
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `⚠️ Agent 2: Failed to merge PR automatically. Error: ${error.message}\n\nPlease merge manually or check for conflicts.`
+              });
+            }
