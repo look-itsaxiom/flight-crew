@@ -54,12 +54,14 @@ This will:
 - ✅ Add agent instructions
 - ✅ Add issue templates
 - ✅ Add configuration file
+- ✅ Add documentation and eject script to flight-crew/ directory
 - ✅ Preserve your existing files
 
 After installation:
 1. Edit `.flight-crew.yml` to set your target branch
 2. Create required labels
-3. Commit and push the changes
+3. Read `flight-crew/QUICKSTART.md` for usage instructions
+4. Commit and push the changes
 
 See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for detailed installation instructions and troubleshooting.
 
@@ -68,6 +70,10 @@ See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for detailed installation instruction
 Changed your mind? Remove Flight Crew completely:
 
 ```bash
+# If you've already installed Flight Crew, use the included eject script:
+./flight-crew/eject.sh
+
+# Or download and run directly:
 curl -fsSL https://raw.githubusercontent.com/look-itsaxiom/flight-crew-poc/main/eject.sh | bash
 ```
 
