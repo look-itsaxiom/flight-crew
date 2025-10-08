@@ -19,7 +19,7 @@ See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for detailed installation instruction
 ## Prerequisites
 
 - A GitHub repository with Actions enabled
-- Admin access to the repository (to create labels)
+- Admin access to the repository (to create labels and add collaborators)
 
 ## Step 1: Setup Labels (One-time)
 
@@ -37,7 +37,18 @@ Create these labels in your repository:
    - Description: Issue has been successfully completed
    - Color: `#1d76db` (blue)
 
-## Step 2: Configure Flight Crew (Optional)
+## Step 2: Add @copilot as Collaborator (Required)
+
+This is **required** for automatic issue assignment:
+
+1. Go to `Settings` → `Collaborators and teams`
+2. Click **"Add people"**
+3. Search for `@copilot` (username: **copilot**)
+4. Add with **Write** permission or higher
+
+> **Without this:** The workflow will still comment with instructions, but won't be able to automatically assign @copilot to issues.
+
+## Step 3: Configure Flight Crew (Optional)
 
 Edit `.flight-crew.yml` (if not already configured):
 
@@ -49,7 +60,7 @@ labels:
 
 **Note**: Branch configuration is no longer needed as GitHub Copilot Workspace handles PR creation automatically.
 
-## Step 3: Create Your First Issue
+## Step 4: Create Your First Issue
 
 1. Click `Issues` → `New issue`
 
@@ -70,7 +81,7 @@ labels:
 
 4. Click `Submit new issue`
 
-## Step 4: Start the Automation
+## Step 5: Start the Automation
 
 1. On your new issue, click `Labels` → Select `ready`
 

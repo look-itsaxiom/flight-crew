@@ -164,13 +164,21 @@ When an issue is completed:
    - `ready` - Issue is ready to be worked on
    - `completed` - Issue has been successfully completed
 
-2. **Permissions:**
+2. **Add @copilot as Collaborator (Required):**
+   For automatic issue assignment to work:
+   - Go to `Settings` → `Collaborators and teams`
+   - Click **"Add people"** and search for **@copilot**
+   - Add with **Write** permission or higher
+   
+   > **Important:** If @copilot is not a collaborator, the workflow will still run and provide instructions in a comment, but automatic assignment will not work.
+
+3. **Permissions:**
    The workflows require these permissions (already configured):
    - `issues: write` - To update issue labels, assignments, and comments
    - `pull-requests: write` - To manage PRs
    - `contents: read` - To read repository content
 
-3. **Target Branch:**
+4. **Target Branch:**
    GitHub Copilot Workspace will determine the target branch automatically based on your repository configuration.
    You may want to configure branch protection rules:
    ```bash
@@ -179,7 +187,7 @@ When an issue is completed:
    git push -u origin develop
    ```
 
-4. **Using the System:**
+5. **Using the System:**
    - Create an issue describing what needs to be done
    - Add the `ready` label to start the automated workflow
    - The agents will handle the rest!
