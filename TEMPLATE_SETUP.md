@@ -57,6 +57,15 @@ If you're starting a new project, the easiest way is to use this repository as a
    - Create `ready` label (green #0e8a16)
    - Create `completed` label (blue #1d76db)
 
+5. **Add @copilot as a Collaborator (Important!):**
+   - Go to `Settings` → `Collaborators and teams`
+   - Click **"Add people"** or **"Invite a collaborator"**
+   - Search for and add **@copilot** (or **copilot**)
+   - Set their permission level to **Write** or higher
+   - Accept the invitation (this may happen automatically)
+   
+   > **Note:** Without this step, the workflow will not be able to automatically assign @copilot to issues. The workflow will provide instructions if @copilot is not a collaborator, but adding them now ensures smooth operation.
+
 ### Step 3: Start Using Flight Crew
 
 Your repository is now ready! Create an issue and label it `ready` to see the agents in action.
@@ -131,13 +140,18 @@ After installation:
 
 1. **Configure target branch** in `.flight-crew.yml`
 2. **Create required labels** (`ready` and `completed`)
-3. **Create a staging branch** if you don't have one:
+3. **Add @copilot as a collaborator:**
+   - Go to repository `Settings` → `Collaborators and teams`
+   - Click **"Add people"** and search for **@copilot**
+   - Set permission level to **Write** or higher
+   - This is required for automatic issue assignment to work
+4. **Create a staging branch** if you don't have one:
    ```bash
    git checkout -b develop
    git push -u origin develop
    git checkout main
    ```
-4. **Commit the changes:**
+5. **Commit the changes:**
    ```bash
    git add .github/ .flight-crew.yml
    git commit -m "Add Flight Crew agent system"
@@ -373,6 +387,22 @@ Ensure the repository has:
 1. Actions enabled: `Settings` → `Actions` → `General`
 2. Workflow permissions: Allow read and write
 3. Correct branch protection rules
+
+### "@copilot cannot be assigned" or "Assignees must be repository collaborators"
+
+This means @copilot is not a collaborator on your repository. To fix:
+
+1. Go to repository `Settings` → `Collaborators and teams`
+2. Click **"Add people"** or **"Invite a collaborator"**
+3. Search for **@copilot** (username: **copilot**)
+4. Add them with **Write** permission or higher
+5. The invitation should be automatically accepted
+
+After adding @copilot as a collaborator:
+- Remove and re-add the "ready" label to trigger assignment again
+- Or manually mention @copilot in the issue to invoke Copilot Workspace
+
+**Note:** The workflow will now comment on the issue with instructions if @copilot is not a collaborator, so you'll see helpful guidance automatically.
 
 ### "Cannot find module 'js-yaml'"
 
