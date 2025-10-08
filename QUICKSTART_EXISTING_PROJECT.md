@@ -35,18 +35,7 @@ your-project/
 
 ## Setup Steps
 
-### 1. Add @copilot as a Collaborator (REQUIRED)
-
-This is **required** for automatic issue assignment:
-
-1. Go to repository **Settings** → **Collaborators and teams**
-2. Click **"Add people"**
-3. Search for **@copilot** (username: copilot)
-4. Add with **Write** permission or higher
-
-> **Without this:** The workflow will comment with instructions, but won't automatically assign @copilot to issues.
-
-### 2. Create Required Labels
+### 1. Create Required Labels
 
 Create these labels in your repository:
 
@@ -62,7 +51,7 @@ Create these labels in your repository:
    - Description: Issue has been successfully completed
    - Color: `#1d76db` (blue)
 
-### 3. Configure Target Branch (Optional)
+### 2. Configure Target Branch (Optional)
 
 Edit `.flight-crew.yml` if needed:
 
@@ -74,7 +63,7 @@ labels:
 
 **Note**: Branch configuration is no longer needed as GitHub Copilot Workspace handles PR creation automatically.
 
-### 4. Commit and Push
+### 3. Commit and Push
 
 ```bash
 git add .github/ .flight-crew.yml flight-crew/
@@ -107,18 +96,19 @@ git push
 
 1. On your new issue, click **Labels** → Select **ready**
 
-2. Watch the magic happen! 🎉
-   - Agent 1 assigns @copilot to the issue
+2. Click **Assignees** → Type `copilot` → Select **@copilot**
+
+3. Watch the magic happen! 🎉
    - GitHub Copilot Workspace creates a PR
    - Copilot implements the code
-   - Agent 2 monitors PR status
-   - Once approved, it will be merged
+   - Agent 2 reviews the PR and provides feedback if needed
+   - Agent 2 merges the PR to develop when ready
    - Issue is closed and marked as completed
 
-3. **Review and approve the PR:**
+4. **Review the PR:**
    - Check the PR created by GitHub Copilot
    - Review the code changes
-   - Approve and merge when ready
+   - Agent 2 will handle the merge when everything looks good
 
 ## Working with Dependencies
 

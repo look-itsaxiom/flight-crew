@@ -126,7 +126,7 @@ jobs:
                   }
                 }
                 
-                // If all dependencies are completed, mark this issue as ready
+                // If all dependencies are completed, mark this issue as ready and assign copilot
                 if (allCompleted) {
                   try {
                     await github.rest.issues.addLabels({
@@ -136,14 +136,32 @@ jobs:
                       labels: ['ready']
                     });
                     
-                    await github.rest.issues.createComment({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      issue_number: issue.number,
-                      body: `🚀 This issue is now unblocked! All dependencies have been completed. Issue #${completedIssue} has been resolved.`
-                    });
+                    // Assign @copilot to the unblocked issue
+                    try {
+                      await github.rest.issues.addAssignees({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issue.number,
+                        assignees: ['copilot']
+                      });
+                      
+                      await github.rest.issues.createComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issue.number,
+                        body: `🚀 This issue is now unblocked and assigned to @copilot! All dependencies have been completed. Issue #${completedIssue} has been resolved.`
+                      });
+                    } catch (assignError) {
+                      // If assignment fails, still notify but ask for manual assignment
+                      await github.rest.issues.createComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issue.number,
+                        body: `🚀 This issue is now unblocked! All dependencies have been completed. Issue #${completedIssue} has been resolved.\n\nPlease manually assign @copilot to this issue to start work.`
+                      });
+                    }
                     
-                    console.log(`Marked issue #${issue.number} as ready`);
+                    console.log(`Marked issue #${issue.number} as ready and assigned to @copilot`);
                   } catch (error) {
                     console.log('Error updating dependent issue:', error.message);
                   }

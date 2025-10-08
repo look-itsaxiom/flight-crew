@@ -1,4 +1,4 @@
-name: Agent 1 - Issue Completion
+name: Agent 1 - Dependent Issue Assignment
 
 on:
   issues:
@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Assign Copilot to Issue
+      - name: Check if this is a dependent issue
+        id: check-dependency
         uses: actions/github-script@v7
         with:
           script: |
@@ -22,82 +23,94 @@ jobs:
             // Check if copilot is already assigned
             const isAssigned = issue.assignees.some(assignee => assignee.login === 'copilot');
             
-            if (!isAssigned) {
-              try {
-                // Assign @copilot to the issue
-                await github.rest.issues.addAssignees({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issue.number,
-                  assignees: ['copilot']
-                });
-                
-                console.log(`✓ Assigned @copilot to issue #${issue.number}`);
-                
-                // Add a comment to notify about the assignment
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issue.number,
-                  body: `🤖 Agent 1 has assigned @copilot to this issue. GitHub Copilot will handle the implementation and create a PR automatically.`
-                });
-              } catch (error) {
-                console.error(`Failed to assign @copilot: ${error.message}`);
-                
-                // Check if the error is due to copilot not being a collaborator
-                if (error.status === 422 || error.message.includes('collaborator')) {
-                  console.log('⚠️  @copilot is not a collaborator on this repository');
-                  
-                  // Comment with setup instructions
-                  const setupMessage = [
-                    '⚠️ **Action Required: Add @copilot as a Collaborator**',
-                    '',
-                    'This issue is labeled as "ready", but @copilot cannot be assigned because they are not a collaborator on this repository.',
-                    '',
-                    '**To enable automatic issue handling:**',
-                    '',
-                    '1. Go to your repository **Settings** → **Collaborators and teams**',
-                    '2. Click **Add people** or **Invite a collaborator**',
-                    '3. Add **@copilot** as a collaborator',
-                    '4. Set their permission level to **Write** or higher',
-                    '',
-                    'Alternatively, you can:',
-                    '- Manually mention @copilot in this issue to invoke GitHub Copilot Workspace',
-                    '- Create a PR manually and link it to this issue',
-                    '',
-                    'Once @copilot is added as a collaborator, you can remove and re-add the "ready" label to trigger automatic assignment.',
-                    '',
-                    'For more information, see the [Flight Crew documentation](https://github.com/look-itsaxiom/flight-crew-poc).'
-                  ].join('\n');
-                  
-                  await github.rest.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: issue.number,
-                    body: setupMessage
-                  });
-                } else {
-                  // Other error - provide generic guidance
-                  const errorMessage = [
-                    '⚠️ **Failed to assign @copilot**',
-                    '',
-                    'An error occurred while trying to assign @copilot to this issue:',
-                    '```',
-                    error.message,
-                    '```',
-                    '',
-                    'You can manually mention @copilot in a comment to invoke GitHub Copilot Workspace, or check the [troubleshooting guide](https://github.com/look-itsaxiom/flight-crew-poc/blob/main/TEMPLATE_SETUP.md#troubleshooting).'
-                  ].join('\n');
-                  
-                  await github.rest.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: issue.number,
-                    body: errorMessage
-                  });
-                }
-              }
-            } else {
+            if (isAssigned) {
               console.log(`@copilot is already assigned to issue #${issue.number}`);
+              return 'already-assigned';
+            }
+            
+            // Check if this issue was labeled by a human (first issue) or by automation (dependent issue)
+            // If it's labeled but not assigned, it's likely a first issue that needs manual assignment
+            const body = issue.body || '';
+            const hasDependencies = /(?:Depends on|Blocked by|Requires)\s+#(\d+)/i.test(body);
+            
+            if (!hasDependencies) {
+              console.log(`Issue #${issue.number} has no dependencies - requires manual @copilot assignment`);
+              return 'manual-assignment-needed';
+            }
+            
+            return 'auto-assign';
+          result-encoding: string
+
+      - name: Assign Copilot to dependent issue
+        if: steps.check-dependency.outputs.result == 'auto-assign'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            
+            try {
+              // Assign @copilot to the issue
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                assignees: ['copilot']
+              });
+              
+              console.log(`✓ Assigned @copilot to dependent issue #${issue.number}`);
+              
+              // Add a comment to notify about the assignment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `�� Agent 1 has assigned @copilot to this issue. GitHub Copilot will handle the implementation and create a PR automatically.`
+              });
+            } catch (error) {
+              console.error(`Failed to assign @copilot: ${error.message}`);
+              
+              // Comment with guidance
+              const errorMessage = [
+                '⚠️ **Failed to assign @copilot**',
+                '',
+                'An error occurred while trying to assign @copilot to this issue:',
+                '```',
+                error.message,
+                '```',
+                '',
+                'Please manually assign @copilot to this issue by clicking Assignees and typing "copilot".'
+              ].join('\n');
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: errorMessage
+              });
             }
 
+      - name: Provide manual assignment instructions
+        if: steps.check-dependency.outputs.result == 'manual-assignment-needed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            
+            const message = [
+              '👋 **Ready to get started!**',
+              '',
+              'This issue is labeled as "ready". To have GitHub Copilot work on it:',
+              '',
+              '1. Click **Assignees** on the right sidebar',
+              '2. Type **copilot** and select **@copilot**',
+              '3. GitHub Copilot Workspace will automatically create a PR and implement the changes',
+              '',
+              '> **Note:** For dependent issues, @copilot will be automatically assigned when their dependencies are completed.'
+            ].join('\n');
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: message
+            });

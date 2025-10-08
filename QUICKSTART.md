@@ -19,7 +19,7 @@ See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for detailed installation instruction
 ## Prerequisites
 
 - A GitHub repository with Actions enabled
-- Admin access to the repository (to create labels and add collaborators)
+- Admin access to the repository (to create labels)
 
 ## Step 1: Setup Labels (One-time)
 
@@ -37,18 +37,7 @@ Create these labels in your repository:
    - Description: Issue has been successfully completed
    - Color: `#1d76db` (blue)
 
-## Step 2: Add @copilot as Collaborator (Required)
-
-This is **required** for automatic issue assignment:
-
-1. Go to `Settings` → `Collaborators and teams`
-2. Click **"Add people"**
-3. Search for `@copilot` (username: **copilot**)
-4. Add with **Write** permission or higher
-
-> **Without this:** The workflow will still comment with instructions, but won't be able to automatically assign @copilot to issues.
-
-## Step 3: Configure Flight Crew (Optional)
+## Step 2: Configure Flight Crew (Optional)
 
 Edit `.flight-crew.yml` (if not already configured):
 
@@ -60,7 +49,7 @@ labels:
 
 **Note**: Branch configuration is no longer needed as GitHub Copilot Workspace handles PR creation automatically.
 
-## Step 4: Create Your First Issue
+## Step 3: Create Your First Issue
 
 1. Click `Issues` → `New issue`
 
@@ -81,24 +70,25 @@ labels:
 
 4. Click `Submit new issue`
 
-## Step 5: Start the Automation
+## Step 4: Assign Issue to @copilot
 
 1. On your new issue, click `Labels` → Select `ready`
 
-2. Watch the magic happen! 🎉
-   - Within seconds, Agent 1 will assign @copilot to the issue
+2. Click `Assignees` on the right sidebar → Type `copilot` → Select **@copilot**
+
+3. Watch the magic happen! 🎉
    - GitHub Copilot Workspace will create a PR automatically
    - Copilot will implement the code
-   - Agent 2 will monitor the PR status
-   - Once approved, it will be merged
+   - Agent 2 will review the PR and provide feedback if needed
+   - Once everything looks good, Agent 2 will merge it to develop
    - Your issue will be closed and marked as completed
 
-3. **Review and approve the PR:**
+4. **Review the PR:**
    - Check the PR created by GitHub Copilot
    - Review the code changes
-   - Approve and merge when ready
+   - Agent 2 will automatically merge when ready
 
-## Step 6: Create a Dependent Issue
+## Step 5: Create a Dependent Issue
 
 1. Create another issue:
    ```markdown
@@ -115,22 +105,20 @@ labels:
    Depends on #1
    ```
 
-2. **Don't label it as ready yet!**
+2. **Don't label it or assign it yet!**
 
-3. When issue #1 is completed, issue #2 will automatically be labeled `ready` and worked on.
+3. When issue #1 is completed, issue #2 will automatically be labeled `ready` and assigned to @copilot.
 
 ## What to Expect
 
 ### Timeline for a Simple Issue
 
 ```
-T+0:00  - Label issue as "ready"
-T+0:05  - Agent 1 assigns @copilot to issue
+T+0:00  - Label issue as "ready" and assign to @copilot
 T+0:10  - GitHub Copilot Workspace creates PR
 T+0:30  - Copilot implements changes (varies by complexity)
-T+1:00  - Agent 2 monitors PR status
-T+1:05  - Human reviews and approves PR
-T+1:10  - PR merged, issue completed
+T+1:00  - Agent 2 reviews PR, provides feedback if needed, or merges
+T+1:10  - PR merged to develop, issue completed
 ```
 
 ### The Feedback Loop

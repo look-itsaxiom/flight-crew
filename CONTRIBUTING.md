@@ -8,15 +8,15 @@ This repository uses an automated workflow where AI agents handle the developmen
 
 ### The Agent System
 
-1. **Agent 1 (Issue Assignment)** - Assigns GitHub Copilot to ready issues
-2. **Agent 2 (PR Monitoring)** - Monitors PRs and manages the merge process
+1. **Agent 1 (Issue Assignment)** - Assigns GitHub Copilot to dependent issues when their dependencies are completed
+2. **Agent 2 (PR Review and Merge)** - Reviews PRs, provides feedback when needed, and manages the merge process
 
 ### Workflow Overview
 
 ```
-1. Create issue → 2. Label "ready" → 3. Agent 1 assigns @copilot → 
-4. GitHub Copilot Workspace creates PR and implements → 5. Agent 2 monitors → 
-6. Review and iterate → 7. Merge → 8. Issue closed → 9. Dependent issues unblocked
+1. Create issue → 2. Label "ready" and assign to @copilot → 
+3. GitHub Copilot Workspace creates PR and implements → 4. Agent 2 reviews and provides feedback if needed → 
+5. Iterate if needed → 6. Agent 2 merges → 7. Issue closed → 8. Dependent issues unblocked and assigned
 ```
 
 ## Creating Issues
@@ -34,11 +34,14 @@ Provide clear, specific information:
 - **Requirements**: Specific requirements or acceptance criteria
 - **Dependencies**: Other issues that must be completed first (optional)
 
-### Step 3: Label as "Ready"
+### Step 3: Label and Assign
 
-When the issue is ready to be worked on, add the `ready` label. This triggers Agent 1 to:
-1. Assign @copilot to the issue
-2. GitHub Copilot Workspace creates PR and implements changes automatically
+When the issue is ready to be worked on:
+1. Add the `ready` label
+2. Manually assign **@copilot** to the issue (click Assignees → type "copilot")
+3. GitHub Copilot Workspace creates PR and implements changes automatically
+
+> **Note:** For the first issue in a dependency chain, you must manually assign @copilot. Dependent issues will be automatically assigned when their dependencies are completed.
 
 ## Issue Dependencies
 
@@ -47,36 +50,36 @@ You can create dependencies between issues by adding phrases like:
 - `Blocked by #456`
 - `Requires #789`
 
-When the blocking issue is completed and merged, your issue will automatically be labeled "ready" and worked on.
+When the blocking issue is completed and merged, your issue will automatically be labeled "ready" and assigned to @copilot.
 
 ## Working with the Agents
 
 ### Agent 1 - Issue Assignment
 
 Agent 1 will:
-- Automatically assign @copilot to your issue
+- Automatically assign @copilot to dependent issues when their dependencies are completed
 - Comment to confirm assignment
 - GitHub Copilot Workspace handles PR creation and implementation
 
-### Agent 2 - PR Monitoring
+### Agent 2 - PR Review and Merge
 
 Agent 2 will:
-- Monitor the PR created by GitHub Copilot
-- Comment on PR status
+- Review the PR created by GitHub Copilot
+- Provide feedback by tagging @copilot if improvements are needed
+- Merge the PR to develop when everything looks good
 - Manage issue labels when PR is merged
-- Unblock dependent issues
+- Unblock dependent issues by labeling them "ready" and assigning @copilot
 
 ## The Review Process
 
 1. GitHub Copilot Workspace creates and implements the PR
-2. Agent 2 monitors the PR status
-3. Reviewers provide feedback directly on the PR
-4. GitHub Copilot automatically addresses feedback
-5. Process repeats until approved
-6. When approved:
-   - PR is merged
+2. Agent 2 reviews the PR and provides feedback if improvements are needed
+3. If feedback is provided, GitHub Copilot automatically addresses it
+4. Process repeats until everything looks good
+5. When ready:
+   - Agent 2 merges the PR to develop
    - Issue is closed and labeled "completed"
-   - Dependent issues are unblocked
+   - Dependent issues are unblocked and assigned to @copilot
 
 ## Best Practices
 
@@ -91,7 +94,7 @@ Agent 2 will:
 ❌ **DON'T:**
 - Create vague or ambiguous issues
 - Bundle multiple unrelated changes in one issue
-- Skip the ready label (agents won't start)
+- Skip the ready label or @copilot assignment (agents won't start)
 
 ### Example Good Issue
 
@@ -138,6 +141,7 @@ The agents will respect manual actions and adjust accordingly.
 
 Check:
 - Is the `ready` label applied?
+- Is @copilot assigned to the issue?
 - Are all dependencies completed?
 - Check the Actions tab for workflow errors
 
@@ -187,4 +191,4 @@ We're continuously improving the system. If you have ideas for enhancements, ple
 
 ---
 
-**Remember**: The agents are here to help! Label your issue as `ready` and let the automation handle the rest.
+**Remember**: Label your issue as `ready`, assign it to @copilot, and let the automation handle the rest!
