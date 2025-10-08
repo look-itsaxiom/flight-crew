@@ -5,102 +5,41 @@ on:
     types: [labeled]
 
 permissions:
-  contents: write
   issues: write
-  pull-requests: write
 
 jobs:
-  create-pr:
+  assign-copilot:
     if: github.event.label.name == 'ready'
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout repository for config
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Load Flight Crew Configuration
-        id: config
-        run: |
-          # Load configuration from .flight-crew.yml or use defaults
-          if [[ -f .flight-crew.yml ]]; then
-            TARGET_BRANCH=$(grep '^target_branch:' .flight-crew.yml | awk '{print $2}' || echo 'develop')
-            BRANCH_PREFIX=$(grep '^branch_prefix:' .flight-crew.yml | awk '{print $2}' || echo 'copilot/issue-')
-          else
-            TARGET_BRANCH="develop"
-            BRANCH_PREFIX="copilot/issue-"
-          fi
-          echo "target_branch=$TARGET_BRANCH" >> $GITHUB_OUTPUT
-          echo "branch_prefix=$BRANCH_PREFIX" >> $GITHUB_OUTPUT
-          echo "Using target branch: $TARGET_BRANCH"
-          echo "Using branch prefix: $BRANCH_PREFIX"
-
-      - name: Check if PR already exists
-        id: check-pr
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const branchPrefix = '${{ steps.config.outputs.branch_prefix }}';
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: `${context.repo.owner}:${branchPrefix}${context.payload.issue.number}`
-            });
-            return prs.length > 0;
-          result-encoding: string
-
-      - name: Create issue branch
-        if: steps.check-pr.outputs.result == 'false'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Create branch from target branch
-          git fetch origin ${{ steps.config.outputs.target_branch }}
-          git checkout -b ${{ steps.config.outputs.branch_prefix }}${{ github.event.issue.number }} origin/${{ steps.config.outputs.target_branch }}
-          git push origin ${{ steps.config.outputs.branch_prefix }}${{ github.event.issue.number }}
-
-      - name: Create Pull Request with Copilot
-        if: steps.check-pr.outputs.result == 'false'
+      - name: Assign Copilot to Issue
         uses: actions/github-script@v7
         with:
           script: |
             const issue = context.payload.issue;
-            const fs = require('fs');
-            const yaml = require('js-yaml');
             
-            // Load configuration
-            let targetBranch = 'develop';
-            let branchPrefix = 'copilot/issue-';
+            // Check if copilot is already assigned
+            const isAssigned = issue.assignees.some(assignee => assignee.login === 'copilot');
             
-            try {
-              if (fs.existsSync('.flight-crew.yml')) {
-                const config = yaml.load(fs.readFileSync('.flight-crew.yml', 'utf8'));
-                targetBranch = config.target_branch || 'develop';
-                branchPrefix = config.branch_prefix || 'copilot/issue-';
-              }
-            } catch (error) {
-              console.log('Using default configuration:', error.message);
+            if (!isAssigned) {
+              // Assign @copilot to the issue
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                assignees: ['copilot']
+              });
+              
+              console.log(`Assigned @copilot to issue #${issue.number}`);
+              
+              // Add a comment to notify about the assignment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `🤖 Agent 1 has assigned @copilot to this issue. GitHub Copilot will handle the implementation and create a PR automatically.`
+              });
+            } else {
+              console.log(`@copilot is already assigned to issue #${issue.number}`);
             }
-            
-            // Create PR targeting the configured branch
-            const { data: pr } = await github.rest.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Fix: ${issue.title}`,
-              head: `${branchPrefix}${issue.number}`,
-              base: targetBranch,
-              body: `Closes #${issue.number}\n\n@copilot Please implement the changes described in issue #${issue.number}:\n\n${issue.body}\n\n---\n\n⚠️ **Note**: This PR targets the \`${targetBranch}\` branch. A human should review and merge this to main after approval.`
-            });
-            
-            console.log(`Created PR #${pr.number} targeting ${targetBranch}`);
-            
-            // Link issue to PR
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issue.number,
-              body: `🤖 Agent 1 has created PR #${pr.number} to address this issue.\n\n📋 The PR targets the \`${targetBranch}\` branch for human review before merging to main.`
-            });
