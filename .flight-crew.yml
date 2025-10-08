@@ -1,16 +1,11 @@
 # Flight Crew Configuration
 # This file configures the behavior of the Flight Crew agent system
 
-# Target branch for agent PRs
-# Agent PRs will target this branch instead of main
-# Set to your staging/development branch (e.g., 'develop', 'staging')
-# A human can then review and merge from this branch to main
-target_branch: develop
-
 # Labels used by the system
 labels:
   ready: ready
   completed: completed
 
-# Branch prefix for agent work
-branch_prefix: copilot/issue-
+# Note: With GitHub Copilot Workspace integration, branch configuration
+# is no longer needed. GitHub Copilot automatically handles PR creation
+# and branch management based on your repository settings.

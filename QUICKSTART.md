@@ -21,31 +21,7 @@ See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for detailed installation instruction
 - A GitHub repository with Actions enabled
 - Admin access to the repository (to create labels)
 
-## Step 1: Create Target Branch
-
-Create a staging/development branch for agent PRs:
-
-```bash
-git checkout -b develop
-git push -u origin develop
-git checkout main  # or your default branch
-```
-
-**Why?** Agents merge to `develop`, then a human reviews and merges `develop` → `main`.
-
-## Step 2: Configure Flight Crew
-
-Edit `.flight-crew.yml` (if not already configured):
-
-```yaml
-target_branch: develop  # Your staging branch
-labels:
-  ready: ready
-  completed: completed
-branch_prefix: copilot/issue-
-```
-
-## Step 3: Setup Labels (One-time)
+## Step 1: Setup Labels (One-time)
 
 Create these labels in your repository:
 
@@ -53,7 +29,7 @@ Create these labels in your repository:
 
 2. Create the `ready` label:
    - Name: `ready`
-   - Description: Issue is ready to be worked on by agents
+   - Description: Issue is ready to be worked on by GitHub Copilot
    - Color: `#0e8a16` (green)
 
 3. Create the `completed` label:
@@ -61,7 +37,19 @@ Create these labels in your repository:
    - Description: Issue has been successfully completed
    - Color: `#1d76db` (blue)
 
-## Step 4: Create Your First Issue
+## Step 2: Configure Flight Crew (Optional)
+
+Edit `.flight-crew.yml` (if not already configured):
+
+```yaml
+labels:
+  ready: ready
+  completed: completed
+```
+
+**Note**: Branch configuration is no longer needed as GitHub Copilot Workspace handles PR creation automatically.
+
+## Step 3: Create Your First Issue
 
 1. Click `Issues` → `New issue`
 
@@ -82,21 +70,22 @@ Create these labels in your repository:
 
 4. Click `Submit new issue`
 
-## Step 5: Start the Automation
+## Step 4: Start the Automation
 
 1. On your new issue, click `Labels` → Select `ready`
 
 2. Watch the magic happen! 🎉
-   - Within seconds, Agent 1 will create a PR targeting `develop`
+   - Within seconds, Agent 1 will assign @copilot to the issue
+   - GitHub Copilot Workspace will create a PR automatically
    - Copilot will implement the code
-   - Agent 2 will review the PR
-   - If approved, it will be merged to `develop`
+   - Agent 2 will monitor the PR status
+   - Once approved, it will be merged
    - Your issue will be closed and marked as completed
 
-3. **Review and merge to main:**
-   - Check the `develop` branch for the completed work
-   - Create a PR from `develop` → `main`
-   - Review and merge when ready
+3. **Review and approve the PR:**
+   - Check the PR created by GitHub Copilot
+   - Review the code changes
+   - Approve and merge when ready
 
 ## Step 6: Create a Dependent Issue
 
@@ -125,23 +114,23 @@ Create these labels in your repository:
 
 ```
 T+0:00  - Label issue as "ready"
-T+0:05  - Agent 1 creates PR
-T+0:10  - Copilot starts implementation
-T+1:00  - Copilot completes implementation (varies by complexity)
-T+1:05  - Agent 2 reviews PR
-T+1:10  - If approved: PR merged, issue completed
-        - If changes needed: Feedback loop begins
+T+0:05  - Agent 1 assigns @copilot to issue
+T+0:10  - GitHub Copilot Workspace creates PR
+T+0:30  - Copilot implements changes (varies by complexity)
+T+1:00  - Agent 2 monitors PR status
+T+1:05  - Human reviews and approves PR
+T+1:10  - PR merged, issue completed
 ```
 
 ### The Feedback Loop
 
-If Agent 2 requests changes:
+If reviewers request changes:
 
 ```
-T+0:00  - Agent 2 comments with feedback, mentions @copilot
-T+0:05  - Agent 1 acknowledges feedback
-T+0:10  - Copilot addresses feedback
-T+0:30  - Agent 2 reviews again
+T+0:00  - Reviewer comments with feedback
+T+0:05  - GitHub Copilot automatically detects feedback
+T+0:10  - Copilot addresses feedback and updates PR
+T+0:30  - Review again
 T+0:35  - Loop repeats until approved
 ```
 
@@ -158,15 +147,16 @@ Visit `Actions` to see:
 
 Check the PR to see:
 - Code changes
-- Review comments from Agent 2
+- Status updates from Agent 2
 - Status checks
 
 ### Issue View
 
 Check the issue to see:
 - Comments from agents
+- Copilot assignment
 - Label changes
-- Link to the PR
+- Link to the PR (once created)
 
 ## Common Workflows
 
@@ -261,16 +251,17 @@ Depends on #45
 ### "Nothing is happening"
 
 1. Check that the `ready` label is applied
-2. Go to Actions tab and check for workflow runs
-3. Check if there are any failed workflows
+2. Verify @copilot was assigned to the issue
+3. Go to Actions tab and check for workflow runs
+4. Check if there are any failed workflows
 
-### "PR was created but no code changes"
+### "No PR created yet"
 
-This is normal! The PR is created first, then Copilot implements the changes. Wait a few minutes and refresh the PR.
+GitHub Copilot Workspace may take a few moments to analyze the issue and create the PR. Be patient and check back in a few minutes.
 
-### "Agent 2 keeps requesting changes"
+### "How do I provide feedback?"
 
-This means the implementation doesn't meet the requirements yet. Review the feedback comments to understand what needs improvement.
+Simply comment on the PR with your feedback. GitHub Copilot will automatically detect and address your comments.
 
 ### "Issue not unblocking"
 

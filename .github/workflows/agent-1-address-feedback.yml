@@ -9,8 +9,6 @@ on:
     types: [created]
 
 permissions:
-  contents: write
-  pull-requests: write
   issues: write
 
 jobs:
@@ -37,53 +35,19 @@ jobs:
             return prNumber;
           result-encoding: string
 
-      - name: Add comment to acknowledge feedback
+      - name: Acknowledge feedback
         uses: actions/github-script@v7
         with:
           script: |
             const prNumber = ${{ steps.get-pr.outputs.result }};
             
+            console.log(`Feedback with @copilot mention detected on PR #${prNumber}`);
+            console.log('GitHub Copilot will handle the feedback directly through GitHub Workspace.');
+            
+            // Optional: Add a minimal acknowledgment comment
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
-              body: '🤖 Agent 1: Received feedback. I will address the requested changes.\n\n@copilot Please address the review feedback in the comments above.'
+              body: '🤖 Agent 1: Feedback received. GitHub Copilot will address the requested changes.'
             });
-
-      - name: Get feedback details
-        id: feedback
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const prNumber = ${{ steps.get-pr.outputs.result }};
-            
-            // Get all review comments
-            const { data: reviews } = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber
-            });
-            
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber
-            });
-            
-            // Find change requests
-            const changeRequests = reviews.filter(r => r.state === 'CHANGES_REQUESTED');
-            
-            return {
-              prNumber: prNumber,
-              hasChangeRequests: changeRequests.length > 0,
-              changeRequests: changeRequests,
-              allComments: comments
-            };
-
-      - name: Summary
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const feedback = ${{ steps.feedback.outputs.result }};
-            console.log('Feedback received:', JSON.stringify(feedback, null, 2));
-            console.log('Agent 1 has been notified to address the feedback');

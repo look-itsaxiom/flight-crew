@@ -42,7 +42,7 @@ jobs:
               hasChanges: files.length > 0
             };
 
-      - name: Auto Review with Copilot
+      - name: Check PR Status
         uses: actions/github-script@v7
         with:
           script: |
@@ -50,42 +50,19 @@ jobs:
             const pr = context.payload.pull_request;
             
             if (!prDetails.hasChanges) {
-              // Request changes if no files were modified
-              await github.rest.pulls.createReview({
+              // Add a comment if no files were modified
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: pr.number,
-                event: 'REQUEST_CHANGES',
-                body: '🤖 Agent 2 Review: No changes detected in this PR. Please implement the required changes.\n\n@copilot Please implement the changes described in the linked issue.'
+                issue_number: pr.number,
+                body: '🤖 Agent 2: No changes detected in this PR yet. Waiting for @copilot to implement the changes.'
               });
             } else {
-              // Request Copilot to review the changes
-              await github.rest.pulls.createReview({
+              // Add a comment noting that changes are present
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: pr.number,
-                event: 'COMMENT',
-                body: '🤖 Agent 2 Review: Changes detected. Requesting detailed code review.\n\n@copilot Please review the changes in this PR for:\n1. Code quality and correctness\n2. Alignment with the issue requirements\n3. Test coverage\n4. Documentation updates\n\nIf the changes look good, approve the PR. If changes are needed, request them with specific feedback.'
+                issue_number: pr.number,
+                body: '🤖 Agent 2: Changes detected. GitHub Copilot will handle the review and approval process.'
               });
-            }
-
-      - name: Check if ready to merge
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data: reviews } = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number
-            });
-            
-            const hasApproval = reviews.some(review => review.state === 'APPROVED');
-            const hasChangesRequested = reviews.some(review => review.state === 'CHANGES_REQUESTED');
-            
-            if (hasApproval && !hasChangesRequested) {
-              console.log('PR is ready to merge - has approval and no change requests');
-              core.setOutput('ready_to_merge', 'true');
-            } else {
-              console.log('PR is not ready to merge yet');
-              core.setOutput('ready_to_merge', 'false');
             }
