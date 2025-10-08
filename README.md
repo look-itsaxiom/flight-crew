@@ -3,14 +3,21 @@
 A proof of concept for a GitHub native issue completion agent system that can handle complex projects from issue creation to completion through automated agents.
 
 > **🚀 New here?** Check out the [Quick Start Guide](QUICKSTART.md) to get up and running in 5 minutes!
+> 
+> **📦 Starting a new project?** Use this repository as a [GitHub template](#using-as-a-template)!
+> 
+> **🔧 Existing project?** [Install Flight Crew](#installing-into-existing-projects) with one command!
 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Using as a Template](#using-as-a-template)
+- [Installing into Existing Projects](#installing-into-existing-projects)
 - [Workflow](#workflow)
 - [GitHub Actions Workflows](#github-actions-workflows)
 - [Issue Dependency Management](#issue-dependency-management)
 - [Setup Instructions](#setup-instructions)
+- [Configuration](#configuration)
 - [Example Issue](#example-issue)
 - [Agent Instructions](#agent-instructions)
 - [Benefits](#benefits)
@@ -20,6 +27,51 @@ A proof of concept for a GitHub native issue completion agent system that can ha
 ## Overview
 
 This system implements an automated workflow where GitHub Issues are automatically worked on by AI agents that create PRs, review code, address feedback, and manage dependencies between issues.
+
+## Using as a Template
+
+**For new projects**, use this repository as a GitHub template:
+
+1. Click the **"Use this template"** button at the top of this repository
+2. Create your new repository
+3. Configure `.flight-crew.yml` with your target branch (default: `develop`)
+4. Create the `ready` and `completed` labels
+5. Create your target branch (`develop` or `staging`)
+6. Start creating issues!
+
+See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for detailed instructions.
+
+## Installing into Existing Projects
+
+**For existing projects**, install Flight Crew with one command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/look-itsaxiom/flight-crew-poc/main/install.sh | bash
+```
+
+This will:
+- ✅ Add all workflow files
+- ✅ Add agent instructions
+- ✅ Add issue templates
+- ✅ Add configuration file
+- ✅ Preserve your existing files
+
+After installation:
+1. Edit `.flight-crew.yml` to set your target branch
+2. Create required labels
+3. Commit and push the changes
+
+See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for detailed installation instructions and troubleshooting.
+
+### Ejecting from Flight Crew
+
+Changed your mind? Remove Flight Crew completely:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/look-itsaxiom/flight-crew-poc/main/eject.sh | bash
+```
+
+See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for details.
 
 ## Workflow
 
@@ -122,10 +174,67 @@ When an issue is completed:
    - `issues: write` - To update issue labels and comments
    - `pull-requests: write` - To create and manage PRs
 
-3. **Using the System:**
+3. **Target Branch:**
+   Create a staging/development branch (recommended):
+   ```bash
+   git checkout -b develop
+   git push -u origin develop
+   ```
+   
+   Configure it in `.flight-crew.yml`:
+   ```yaml
+   target_branch: develop
+   ```
+
+4. **Using the System:**
    - Create an issue describing what needs to be done
    - Add the `ready` label to start the automated workflow
    - The agents will handle the rest!
+
+## Configuration
+
+Flight Crew is configured via `.flight-crew.yml` in your repository root:
+
+```yaml
+# Target branch for agent PRs
+# Agents will create PRs targeting this branch instead of main
+# A human should review and merge from this branch to main
+target_branch: develop
+
+# Labels used by the system
+labels:
+  ready: ready
+  completed: completed
+
+# Branch prefix for agent work
+branch_prefix: copilot/issue-
+```
+
+### Target Branch (Human Approval Gate)
+
+**Important**: Agent PRs target your configured branch (e.g., `develop`), NOT `main`.
+
+This ensures:
+- ✅ Agents work autonomously on the staging branch
+- ✅ Multiple issues can be completed and tested together
+- ✅ A human reviews and approves the final merge to `main`
+- ✅ Production (`main`) only gets human-approved changes
+
+**Workflow:**
+```
+Issue labeled "ready"
+  → Agent creates PR to develop
+  → Copilot implements
+  → Agent reviews and merges to develop
+  → Human reviews develop
+  → Human merges develop → main
+```
+
+**Recommended branch protection:**
+- `develop`: Allow agents to merge (no review required)
+- `main`: Require human approval (1+ reviews required)
+
+See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for detailed configuration options.
 
 ## Example Issue
 
@@ -186,9 +295,13 @@ Cycle continues...
 ## Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
+- **[TEMPLATE_SETUP.md](TEMPLATE_SETUP.md)** - Using as template or installing into existing projects
 - **[EXAMPLE.md](EXAMPLE.md)** - Complete walkthrough of a multi-issue project
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to work with the agent system
 - **[LICENSE](LICENSE)** - MIT License
+- **Scripts:**
+  - [install.sh](install.sh) - Install into existing projects
+  - [eject.sh](eject.sh) - Remove Flight Crew from your project
 - **Agent Instructions:**
   - [Agent 1 Instructions](.github/agents/agent-1-instructions.md)
   - [Agent 2 Instructions](.github/agents/agent-2-instructions.md)

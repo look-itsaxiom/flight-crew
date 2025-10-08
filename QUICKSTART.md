@@ -2,12 +2,50 @@
 
 Get started with Flight Crew POC in 5 minutes!
 
+## Two Ways to Get Started
+
+### Option 1: Use as Template (New Projects)
+Click "Use this template" button → Create repository → Follow setup below
+
+### Option 2: Install into Existing Project
+```bash
+curl -fsSL https://raw.githubusercontent.com/look-itsaxiom/flight-crew-poc/main/install.sh | bash
+```
+
+See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for detailed installation instructions.
+
+---
+
 ## Prerequisites
 
 - A GitHub repository with Actions enabled
 - Admin access to the repository (to create labels)
 
-## Step 1: Setup Labels (One-time)
+## Step 1: Create Target Branch
+
+Create a staging/development branch for agent PRs:
+
+```bash
+git checkout -b develop
+git push -u origin develop
+git checkout main  # or your default branch
+```
+
+**Why?** Agents merge to `develop`, then a human reviews and merges `develop` → `main`.
+
+## Step 2: Configure Flight Crew
+
+Edit `.flight-crew.yml` (if not already configured):
+
+```yaml
+target_branch: develop  # Your staging branch
+labels:
+  ready: ready
+  completed: completed
+branch_prefix: copilot/issue-
+```
+
+## Step 3: Setup Labels (One-time)
 
 Create these labels in your repository:
 
@@ -23,7 +61,7 @@ Create these labels in your repository:
    - Description: Issue has been successfully completed
    - Color: `#1d76db` (blue)
 
-## Step 2: Create Your First Issue
+## Step 4: Create Your First Issue
 
 1. Click `Issues` → `New issue`
 
@@ -44,18 +82,23 @@ Create these labels in your repository:
 
 4. Click `Submit new issue`
 
-## Step 3: Start the Automation
+## Step 5: Start the Automation
 
 1. On your new issue, click `Labels` → Select `ready`
 
 2. Watch the magic happen! 🎉
-   - Within seconds, Agent 1 will create a PR
+   - Within seconds, Agent 1 will create a PR targeting `develop`
    - Copilot will implement the code
    - Agent 2 will review the PR
-   - If approved, it will be merged automatically
+   - If approved, it will be merged to `develop`
    - Your issue will be closed and marked as completed
 
-## Step 4: Create a Dependent Issue
+3. **Review and merge to main:**
+   - Check the `develop` branch for the completed work
+   - Create a PR from `develop` → `main`
+   - Review and merge when ready
+
+## Step 6: Create a Dependent Issue
 
 1. Create another issue:
    ```markdown
