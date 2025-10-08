@@ -1,0 +1,62 @@
+name: Bug Fix
+description: Report a bug that needs to be fixed
+title: "[Bug]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Report
+        Please describe the bug that needs to be fixed.
+        
+        Once this issue is ready to be worked on, add the `ready` label to trigger Agent 1.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: What is the bug?
+      placeholder: Describe the bug...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce the bug?
+      placeholder: |
+        1. Step 1
+        2. Step 2
+        3. Bug occurs
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen instead?
+      placeholder: Describe the expected behavior...
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Does fixing this bug depend on other issues? (Use "Depends on #123" format)
+      placeholder: |
+        Depends on #123
+        Blocked by #456
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context about the bug
+      placeholder: Add any additional details...
+    validations:
+      required: false

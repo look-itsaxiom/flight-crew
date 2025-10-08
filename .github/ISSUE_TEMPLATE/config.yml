@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/look-itsaxiom/flight-crew-poc/discussions
+    about: For questions and general discussions about the Flight Crew POC system
