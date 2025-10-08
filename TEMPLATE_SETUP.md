@@ -131,7 +131,10 @@ your-project/
 │       ├── feature_request.yml
 │       ├── bug_fix.yml
 │       └── config.yml
-└── .flight-crew.yml
+├── .flight-crew.yml
+└── flight-crew/
+    ├── QUICKSTART.md         # Quick start guide
+    └── eject.sh             # Script to remove Flight Crew
 ```
 
 ### Post-Installation Steps
@@ -153,9 +156,14 @@ After installation:
    ```
 5. **Commit the changes:**
    ```bash
-   git add .github/ .flight-crew.yml
+   git add .github/ .flight-crew.yml flight-crew/
    git commit -m "Add Flight Crew agent system"
    git push
+   ```
+
+6. **Read the quick start guide:**
+   ```bash
+   cat flight-crew/QUICKSTART.md
    ```
 
 ---
@@ -231,14 +239,23 @@ labels:
 
 If you decide Flight Crew isn't right for your project, you can completely remove it.
 
-### Option A: Quick Eject
+### Option A: Quick Eject (via curl)
 
 ```bash
 # Run from your project root
 curl -fsSL https://raw.githubusercontent.com/look-itsaxiom/flight-crew-poc/main/eject.sh | bash
 ```
 
-### Option B: Manual Eject
+### Option B: Use Installed Eject Script
+
+If you've already installed Flight Crew, use the eject script that came with it:
+
+```bash
+# Run from your project root
+./flight-crew/eject.sh
+```
+
+### Option C: Manual Download and Run
 
 1. **Download the eject script:**
    ```bash
@@ -260,6 +277,7 @@ The eject script removes:
 - All 4 workflow files
 - Agent instruction files
 - Configuration file (`.flight-crew.yml`)
+- flight-crew/ directory (documentation and eject script)
 - Issue templates (optional - you choose)
 - Empty directories
 

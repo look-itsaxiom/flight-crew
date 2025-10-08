@@ -33,6 +33,7 @@ echo "  - .github/agents/agent-2-instructions.md"
 echo "  - .github/ISSUE_TEMPLATE/feature_request.yml (optional)"
 echo "  - .github/ISSUE_TEMPLATE/bug_fix.yml (optional)"
 echo "  - .flight-crew.yml"
+echo "  - flight-crew/ directory (documentation and scripts)"
 echo ""
 
 read -p "Are you sure you want to continue? (yes/no): " confirm
@@ -59,10 +60,10 @@ remove_file() {
     if [[ -f "$file" ]]; then
         rm "$file"
         echo "  ✓ Removed $file"
-        ((files_removed++))
+        files_removed=$((files_removed + 1))
     else
         echo "  ⊘ Not found: $file"
-        ((files_not_found++))
+        files_not_found=$((files_not_found + 1))
     fi
 }
 
@@ -78,6 +79,16 @@ remove_file ".github/agents/agent-2-instructions.md"
 
 # Remove configuration
 remove_file ".flight-crew.yml"
+
+# Remove flight-crew directory
+echo ""
+echo "🗑️  Removing flight-crew directory..."
+if [[ -d "flight-crew" ]]; then
+    rm -rf "flight-crew"
+    echo "  ✓ Removed flight-crew directory"
+else
+    echo "  ⊘ Not found: flight-crew directory"
+fi
 
 # Ask about issue templates
 echo ""

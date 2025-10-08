@@ -32,8 +32,9 @@ cd "$REPO_ROOT"
 mkdir -p .github/workflows
 mkdir -p .github/agents
 mkdir -p .github/ISSUE_TEMPLATE
+mkdir -p flight-crew
 
-echo "✓ Created .github directories"
+echo "✓ Created .github directories and flight-crew directory"
 
 # Download or copy workflow files
 FLIGHT_CREW_SOURCE="${FLIGHT_CREW_SOURCE:-https://raw.githubusercontent.com/look-itsaxiom/flight-crew-poc/main}"
@@ -83,6 +84,12 @@ echo "✓ Downloaded issue templates"
 download_file ".flight-crew.yml" ".flight-crew.yml"
 echo "✓ Downloaded configuration file"
 
+# Download documentation and scripts to flight-crew/ directory
+download_file "QUICKSTART_EXISTING_PROJECT.md" "flight-crew/QUICKSTART.md"
+download_file "eject.sh" "flight-crew/eject.sh"
+chmod +x "flight-crew/eject.sh"
+echo "✓ Downloaded documentation and eject script to flight-crew/ directory"
+
 echo ""
 echo "╔══════════════════════════════════════════════════════════════════════════════╗"
 echo "║                    Installation Complete! ✅                                 ║"
@@ -103,7 +110,7 @@ echo "3. Review and edit .flight-crew.yml to configure the target branch"
 echo "   Current setting: develop (change if needed)"
 echo ""
 echo "4. Commit and push the new files:"
-echo "   git add .github/ .flight-crew.yml"
+echo "   git add .github/ .flight-crew.yml flight-crew/"
 echo "   git commit -m 'Add Flight Crew agent system'"
 echo "   git push"
 echo ""
@@ -117,5 +124,6 @@ echo "⚠️  Note: If @copilot is not a collaborator, the workflow will comment
 echo "   with instructions, but automatic assignment will not work."
 echo ""
 echo "📚 Documentation:"
-echo "   https://github.com/look-itsaxiom/flight-crew-poc"
+echo "   Read flight-crew/QUICKSTART.md for detailed instructions"
+echo "   Run flight-crew/eject.sh if you want to remove Flight Crew"
 echo ""
