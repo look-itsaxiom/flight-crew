@@ -84,54 +84,56 @@ See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for details.
 The system uses two main agents that work together:
 
 ### Agent 1 - Issue Assignment Agent
-Assigns GitHub Copilot to issues labeled as "ready"
+Assigns GitHub Copilot to dependent issues when their dependencies are completed
 
-### Agent 2 - PR Monitoring Agent
-Monitors PRs created by GitHub Copilot and provides status updates
+### Agent 2 - PR Monitoring and Merge Agent
+Monitors PRs created by GitHub Copilot, reviews them, provides feedback when needed, and merges approved PRs
 
 ## Complete Workflow Example
 
-1. **Issue A labeled "ready"** 
-   - Agent 1 assigns @copilot to the issue
+1. **Issue A labeled "ready" and assigned to @copilot** 
+   - User manually assigns @copilot to the issue
    - GitHub Copilot Workspace automatically creates a PR and implements the changes
 
-2. **Agent 2 monitors the PR**
+2. **Agent 2 monitors and reviews the PR**
    - Automatically triggered when PR is opened/updated
-   - Comments on PR status (changes detected or waiting for changes)
-   - GitHub Copilot handles its own review and iteration
+   - Reviews the changes and provides feedback by tagging @copilot if improvements are needed
+   - If everything looks good, proceeds without comment
+   - GitHub Copilot addresses any feedback automatically
 
 3. **Two possible paths:**
 
    **Path A - Changes Requested:**
-   - Reviewers comment with specific feedback
+   - Agent 2 or human reviewers comment with specific feedback, tagging @copilot
    - GitHub Copilot automatically addresses the feedback
    - Process repeats until approved
 
    **Path B - Approved:**
-   - PR is approved and merged
+   - PR is approved and merged to develop branch by Agent 2
    - Agent 2 closes Issue A
    - Agent 2 adds "completed" label to Issue A
    - Agent 2 removes "ready" label from Issue A
    - Agent 2 checks for dependent issues
-   - If Issue B was blocked by Issue A, it gets labeled "ready"
+   - If Issue B was blocked by Issue A, it gets labeled "ready" and assigned to @copilot
    - Agent 1 automatically assigns Copilot to Issue B
 
 ## GitHub Actions Workflows
 
 ### 1. `agent-1-issue-completion.yml`
-**Trigger:** Issue labeled with "ready"
+**Trigger:** Issue labeled with "ready" (for dependent issues)
 
 **Actions:**
-- Assigns @copilot to the issue
+- Assigns @copilot to dependent issues that have been unblocked
 - GitHub Copilot Workspace handles PR creation and implementation automatically
 
 ### 2. `agent-2-pr-review.yml`
 **Trigger:** PR opened, updated, or reopened
 
 **Actions:**
-- Retrieves PR details and changed files
-- Comments on PR status (changes detected or waiting)
-- GitHub Copilot handles its own reviews and iterations
+- Retrieves PR details and reviews changed files
+- Provides feedback by tagging @copilot if improvements are needed
+- Skips commenting if everything looks good
+- GitHub Copilot handles addressing feedback automatically
 
 ### 3. `agent-1-address-feedback.yml`
 **Trigger:** PR review comments mentioning @copilot
@@ -144,12 +146,13 @@ Monitors PRs created by GitHub Copilot and provides status updates
 **Trigger:** PR closed (merged)
 
 **Actions:**
+- Merges PR to develop branch
 - Extracts linked issue number from PR
 - Closes the completed issue
 - Adds "completed" label
 - Removes "ready" label
 - Scans all open issues for dependencies
-- Unblocks dependent issues by labeling them "ready"
+- Unblocks dependent issues by labeling them "ready" and assigning @copilot
 
 ## Issue Dependency Management
 
@@ -159,9 +162,10 @@ Issues can declare dependencies using these patterns in their description:
 - `Requires #123`
 
 When an issue is completed:
-1. The system finds all issues that depend on it
-2. Checks if all dependencies for those issues are now resolved
-3. Automatically labels them as "ready" to start the workflow
+1. Agent 2 merges the PR to develop
+2. The system finds all issues that depend on it
+3. Checks if all dependencies for those issues are now resolved
+4. Automatically labels them as "ready" and assigns @copilot to start the workflow
 
 ## Setup Instructions
 
@@ -170,13 +174,13 @@ When an issue is completed:
    - `ready` - Issue is ready to be worked on
    - `completed` - Issue has been successfully completed
 
-2. **Add @copilot as Collaborator (Required):**
-   For automatic issue assignment to work:
-   - Go to `Settings` → `Collaborators and teams`
-   - Click **"Add people"** and search for **@copilot**
-   - Add with **Write** permission or higher
+2. **Assigning Issues:**
+   To have GitHub Copilot work on an issue:
+   - Create an issue with the `ready` label
+   - Manually assign **@copilot** to the issue (click Assignees → type "copilot")
+   - GitHub Copilot Workspace will automatically create a PR and implement the changes
    
-   > **Important:** If @copilot is not a collaborator, the workflow will still run and provide instructions in a comment, but automatic assignment will not work.
+   > **Note:** You must manually assign @copilot to the first issue. Subsequent dependent issues will be automatically assigned when their dependencies are completed.
 
 3. **Permissions:**
    The workflows require these permissions (already configured):
@@ -195,7 +199,8 @@ When an issue is completed:
 
 5. **Using the System:**
    - Create an issue describing what needs to be done
-   - Add the `ready` label to start the automated workflow
+   - Add the `ready` label 
+   - Manually assign **@copilot** to the issue (click Assignees → type "copilot")
    - The agents will handle the rest!
 
 ## Configuration

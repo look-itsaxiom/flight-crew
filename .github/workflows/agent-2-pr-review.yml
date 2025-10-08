@@ -19,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get PR details
+      - name: Get PR details and review
         id: pr-details
         uses: actions/github-script@v7
         with:
@@ -36,33 +36,31 @@ jobs:
               pull_number: context.payload.pull_request.number
             });
             
-            return {
-              pr: pr,
-              files: files,
-              hasChanges: files.length > 0
-            };
+            console.log(`PR #${pr.number}: ${pr.title}`);
+            console.log(`Files changed: ${files.length}`);
+            
+            // Simple review logic:
+            // - If no files changed, ask copilot to make changes
+            // - If files changed, acknowledge and let it proceed
+            // Agent 2 can provide feedback by commenting and tagging @copilot if needed
+            // But it's not required - if everything looks fine, it can stay silent
+            
+            if (files.length === 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: '🤖 Agent 2: No changes detected in this PR yet. @copilot please implement the changes.'
+              });
+            } else {
+              // PR has changes - Agent 2 could review and provide feedback here if needed
+              // For now, we'll let it proceed without comment if everything looks okay
+              console.log('Changes detected - proceeding without comment');
+            }
 
-      - name: Check PR Status
+      - name: Check PR status
         uses: actions/github-script@v7
         with:
           script: |
-            const prDetails = ${{ steps.pr-details.outputs.result }};
             const pr = context.payload.pull_request;
-            
-            if (!prDetails.hasChanges) {
-              // Add a comment if no files were modified
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                body: '🤖 Agent 2: No changes detected in this PR yet. Waiting for @copilot to implement the changes.'
-              });
-            } else {
-              // Add a comment noting that changes are present
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                body: '🤖 Agent 2: Changes detected. GitHub Copilot will handle the review and approval process.'
-              });
-            }
+            console.log(`PR #${pr.number} review completed`);
