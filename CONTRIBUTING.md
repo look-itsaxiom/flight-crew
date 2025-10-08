@@ -8,15 +8,15 @@ This repository uses an automated workflow where AI agents handle the developmen
 
 ### The Agent System
 
-1. **Agent 1 (Issue Completion)** - Implements solutions to issues
-2. **Agent 2 (PR Review)** - Reviews PRs and manages the merge process
+1. **Agent 1 (Issue Assignment)** - Assigns GitHub Copilot to ready issues
+2. **Agent 2 (PR Monitoring)** - Monitors PRs and manages the merge process
 
 ### Workflow Overview
 
 ```
-1. Create issue → 2. Label "ready" → 3. Agent 1 creates PR → 
-4. Copilot implements → 5. Agent 2 reviews → 6. Iterate or merge → 
-7. Issue closed → 8. Dependent issues unblocked
+1. Create issue → 2. Label "ready" → 3. Agent 1 assigns @copilot → 
+4. GitHub Copilot Workspace creates PR and implements → 5. Agent 2 monitors → 
+6. Review and iterate → 7. Merge → 8. Issue closed → 9. Dependent issues unblocked
 ```
 
 ## Creating Issues
@@ -37,9 +37,8 @@ Provide clear, specific information:
 ### Step 3: Label as "Ready"
 
 When the issue is ready to be worked on, add the `ready` label. This triggers Agent 1 to:
-1. Create a new branch
-2. Open a PR
-3. Request Copilot to implement the changes
+1. Assign @copilot to the issue
+2. GitHub Copilot Workspace creates PR and implements changes automatically
 
 ## Issue Dependencies
 
@@ -52,32 +51,29 @@ When the blocking issue is completed and merged, your issue will automatically b
 
 ## Working with the Agents
 
-### Agent 1 - Issue Completion
+### Agent 1 - Issue Assignment
 
 Agent 1 will:
-- Automatically create a PR for your issue
-- Tag @copilot to implement the solution
-- Respond to review feedback
-- Iterate until the PR is approved
+- Automatically assign @copilot to your issue
+- Comment to confirm assignment
+- GitHub Copilot Workspace handles PR creation and implementation
 
-### Agent 2 - PR Review
+### Agent 2 - PR Monitoring
 
 Agent 2 will:
-- Automatically review the PR
-- Check code quality and correctness
-- Request changes if needed (mentioning @copilot)
-- Merge when approved
-- Manage issue labels and dependencies
+- Monitor the PR created by GitHub Copilot
+- Comment on PR status
+- Manage issue labels when PR is merged
+- Unblock dependent issues
 
 ## The Review Process
 
-1. Agent 2 reviews every PR automatically
-2. If changes are needed:
-   - Agent 2 comments with specific feedback
-   - Tags @copilot to trigger Agent 1
-   - Agent 1 addresses the feedback
-   - Process repeats until approved
-3. When approved:
+1. GitHub Copilot Workspace creates and implements the PR
+2. Agent 2 monitors the PR status
+3. Reviewers provide feedback directly on the PR
+4. GitHub Copilot automatically addresses feedback
+5. Process repeats until approved
+6. When approved:
    - PR is merged
    - Issue is closed and labeled "completed"
    - Dependent issues are unblocked

@@ -77,29 +77,28 @@ See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for details.
 
 The system uses two main agents that work together:
 
-### Agent 1 - Issue Completion Agent
-Automatically implements solutions for issues labeled as "ready"
+### Agent 1 - Issue Assignment Agent
+Assigns GitHub Copilot to issues labeled as "ready"
 
-### Agent 2 - PR Review Agent
-Reviews PRs, provides feedback, and manages the merge process
+### Agent 2 - PR Monitoring Agent
+Monitors PRs created by GitHub Copilot and provides status updates
 
 ## Complete Workflow Example
 
 1. **Issue A labeled "ready"** 
-   - Agent 1 creates a branch `copilot/issue-{number}`
-   - Agent 1 opens a PR with @copilot mention
-   - Copilot implements the changes
+   - Agent 1 assigns @copilot to the issue
+   - GitHub Copilot Workspace automatically creates a PR and implements the changes
 
-2. **Agent 2 reviews the PR**
+2. **Agent 2 monitors the PR**
    - Automatically triggered when PR is opened/updated
-   - Requests Copilot to review code quality and correctness
+   - Comments on PR status (changes detected or waiting for changes)
+   - GitHub Copilot handles its own review and iteration
 
 3. **Two possible paths:**
 
    **Path A - Changes Requested:**
-   - Agent 2 comments with specific feedback and tags @copilot
-   - Agent 1 workflow triggers to acknowledge feedback
-   - Copilot addresses the feedback
+   - Reviewers comment with specific feedback
+   - GitHub Copilot automatically addresses the feedback
    - Process repeats until approved
 
    **Path B - Approved:**
@@ -109,7 +108,7 @@ Reviews PRs, provides feedback, and manages the merge process
    - Agent 2 removes "ready" label from Issue A
    - Agent 2 checks for dependent issues
    - If Issue B was blocked by Issue A, it gets labeled "ready"
-   - Agent 1 automatically starts working on Issue B
+   - Agent 1 automatically assigns Copilot to Issue B
 
 ## GitHub Actions Workflows
 
@@ -117,26 +116,23 @@ Reviews PRs, provides feedback, and manages the merge process
 **Trigger:** Issue labeled with "ready"
 
 **Actions:**
-- Checks if PR already exists for this issue
-- Creates a new branch `copilot/issue-{number}`
-- Opens a PR with @copilot mention to implement the issue
+- Assigns @copilot to the issue
+- GitHub Copilot Workspace handles PR creation and implementation automatically
 
 ### 2. `agent-2-pr-review.yml`
 **Trigger:** PR opened, updated, or reopened
 
 **Actions:**
 - Retrieves PR details and changed files
-- If no changes: requests changes
-- If changes present: requests Copilot to review the code
-- Checks if PR is ready to merge based on approvals
+- Comments on PR status (changes detected or waiting)
+- GitHub Copilot handles its own reviews and iterations
 
 ### 3. `agent-1-address-feedback.yml`
 **Trigger:** PR review comments mentioning @copilot
 
 **Actions:**
-- Detects feedback from Agent 2
-- Acknowledges the feedback
-- Triggers Copilot to address the requested changes
+- Acknowledges feedback received
+- GitHub Copilot automatically addresses feedback through Workspace
 
 ### 4. `agent-2-pr-merge.yml`
 **Trigger:** PR closed (merged)
@@ -170,20 +166,17 @@ When an issue is completed:
 
 2. **Permissions:**
    The workflows require these permissions (already configured):
-   - `contents: write` - To create branches and commits
-   - `issues: write` - To update issue labels and comments
-   - `pull-requests: write` - To create and manage PRs
+   - `issues: write` - To update issue labels, assignments, and comments
+   - `pull-requests: write` - To manage PRs
+   - `contents: read` - To read repository content
 
 3. **Target Branch:**
-   Create a staging/development branch (recommended):
+   GitHub Copilot Workspace will determine the target branch automatically based on your repository configuration.
+   You may want to configure branch protection rules:
    ```bash
+   # Optional: Create a develop branch for staging
    git checkout -b develop
    git push -u origin develop
-   ```
-   
-   Configure it in `.flight-crew.yml`:
-   ```yaml
-   target_branch: develop
    ```
 
 4. **Using the System:**
@@ -196,43 +189,20 @@ When an issue is completed:
 Flight Crew is configured via `.flight-crew.yml` in your repository root:
 
 ```yaml
-# Target branch for agent PRs
-# Agents will create PRs targeting this branch instead of main
-# A human should review and merge from this branch to main
-target_branch: develop
-
 # Labels used by the system
 labels:
   ready: ready
   completed: completed
-
-# Branch prefix for agent work
-branch_prefix: copilot/issue-
 ```
 
-### Target Branch (Human Approval Gate)
+### Configuration Notes
 
-**Important**: Agent PRs target your configured branch (e.g., `develop`), NOT `main`.
+**Simplified Configuration**: With GitHub Copilot Workspace handling PR creation, the system no longer requires branch prefix or target branch configuration. GitHub Copilot will automatically determine the appropriate branch based on your repository setup.
 
-This ensures:
-- ✅ Agents work autonomously on the staging branch
-- ✅ Multiple issues can be completed and tested together
-- ✅ A human reviews and approves the final merge to `main`
-- ✅ Production (`main`) only gets human-approved changes
-
-**Workflow:**
-```
-Issue labeled "ready"
-  → Agent creates PR to develop
-  → Copilot implements
-  → Agent reviews and merges to develop
-  → Human reviews develop
-  → Human merges develop → main
-```
-
-**Recommended branch protection:**
-- `develop`: Allow agents to merge (no review required)
-- `main`: Require human approval (1+ reviews required)
+**Branch Protection (Recommended)**:
+- Configure branch protection rules in your repository settings
+- Require reviews for merges to `main` branch
+- Consider using a `develop` or staging branch for testing
 
 See [TEMPLATE_SETUP.md](TEMPLATE_SETUP.md) for detailed configuration options.
 
@@ -275,17 +245,19 @@ Detailed instructions for each agent can be found in:
 ```
 Issue (ready) 
     ↓
-[Agent 1] Creates PR → Copilot implements
+[Agent 1] Assigns @copilot to issue
     ↓
-[Agent 2] Reviews PR
+GitHub Copilot Workspace creates PR and implements
     ↓
-Changes needed? → @copilot → [Agent 1] Addresses feedback
-    ↓                              ↓
-    No                            Yes → Loop back to review
+[Agent 2] Monitors PR status
     ↓
-[Agent 2] Merges PR
+Changes needed? → Reviewers comment → Copilot addresses feedback
+    ↓                                          ↓
+    No                                        Yes → Loop back
     ↓
-Issue labeled "completed"
+PR approved and merged
+    ↓
+[Agent 2] Closes issue and labels "completed"
     ↓
 Dependent issues labeled "ready"
     ↓

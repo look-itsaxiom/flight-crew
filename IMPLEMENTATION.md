@@ -41,26 +41,22 @@ flight-crew-poc/
 #### `agent-1-issue-completion.yml`
 - **Triggers**: When issue is labeled "ready"
 - **Actions**:
-  - Checks if PR already exists
-  - Creates branch `copilot/issue-{number}`
-  - Opens PR with @copilot mention
-  - Links issue to PR
+  - Assigns @copilot to the issue
+  - GitHub Copilot Workspace handles PR creation automatically
+  - Comments on issue to confirm assignment
 
 #### `agent-1-address-feedback.yml`
 - **Triggers**: PR review comment mentions @copilot
 - **Actions**:
-  - Detects feedback from Agent 2
-  - Acknowledges feedback
-  - Triggers Copilot to address changes
-  - Provides feedback summary
+  - Acknowledges feedback received
+  - GitHub Copilot handles feedback automatically through Workspace
 
 #### `agent-2-pr-review.yml`
 - **Triggers**: PR opened, updated, or reopened
 - **Actions**:
   - Retrieves PR details and files
-  - Requests Copilot review for code quality
-  - Checks if no changes (requests changes)
-  - Evaluates if PR is ready to merge
+  - Comments on PR status (changes detected or waiting)
+  - GitHub Copilot handles its own reviews
 
 #### `agent-2-pr-merge.yml`
 - **Triggers**: PR closed (merged)
@@ -147,19 +143,18 @@ flight-crew-poc/
 ## Key Features Implemented
 
 ### ✅ Automated Issue-to-PR Workflow
-- Issues labeled "ready" automatically get PRs created
-- Branch naming follows convention: `copilot/issue-{number}`
-- PR titles and bodies are auto-generated
+- Issues labeled "ready" automatically get @copilot assigned
+- GitHub Copilot Workspace handles PR creation
+- PR implementation is managed by GitHub Copilot
 
-### ✅ Intelligent PR Review
-- Automatic review triggers on PR updates
-- Copilot integration for code review
-- Checks for empty PRs
-- Evaluates approval status
+### ✅ PR Monitoring
+- Automatic status updates on PRs
+- Tracks changes and implementation progress
+- GitHub Copilot handles reviews through Workspace
 
 ### ✅ Feedback Loop
-- @copilot mentions trigger Agent 1
-- Acknowledgment of feedback
+- Reviewers comment directly on PRs
+- GitHub Copilot automatically detects and addresses feedback
 - Iterative improvement cycle
 - Status tracking
 
@@ -193,26 +188,25 @@ flight-crew-poc/
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                   AGENT 1: ISSUE COMPLETION                  │
+│                   AGENT 1: ISSUE ASSIGNMENT                  │
 │  - Triggered by "ready" label                               │
-│  - Creates branch: copilot/issue-{number}                   │
-│  - Opens PR with @copilot mention                           │
-│  - Links issue to PR                                        │
+│  - Assigns @copilot to issue                                │
+│  - Notifies about assignment                                │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                   COPILOT IMPLEMENTATION                     │
+│            GITHUB COPILOT WORKSPACE IMPLEMENTATION           │
 │  - Receives @copilot mention                                │
+│  - Creates PR automatically                                 │
 │  - Implements changes                                       │
-│  - Pushes to PR branch                                      │
+│  - Handles feedback and iterations                          │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                   AGENT 2: PR REVIEW                         │
+│                   AGENT 2: PR MONITORING                     │
 │  - Triggered on PR update                                   │
-│  - Requests Copilot code review                             │
-│  - Checks code quality                                      │
-│  - Evaluates if ready to merge                              │
+│  - Comments on PR status                                    │
+│  - Tracks implementation progress                           │
 └─────────────────────────────────────────────────────────────┘
                             ↓
                     ┌───────┴───────┐
@@ -223,10 +217,10 @@ flight-crew-poc/
           └──────┬───────┘  └──────┬───────┘
                  ↓                  ↓
                  │         ┌────────────────────┐
-                 │         │  AGENT 1: FEEDBACK │
-                 │         │  - @copilot mention│
-                 │         │  - Acknowledges    │
+                 │         │  COPILOT WORKSPACE │
+                 │         │  - Detects feedback│
                  │         │  - Addresses       │
+                 │         │  - Updates PR      │
                  │         └────────┬───────────┘
                  │                  ↓
                  │         [Loop back to review]
@@ -248,10 +242,10 @@ flight-crew-poc/
 
 ### Permissions Required
 
-All workflows use these permissions:
-- `contents: write` - Create branches, commit changes
-- `issues: write` - Update labels, comments, close issues
-- `pull-requests: write` - Create PRs, reviews, comments
+Workflows use these permissions:
+- `issues: write` - Update labels, assignments, comments, close issues
+- `pull-requests: write` - Manage PRs and comments
+- `contents: read` - Read repository content
 
 ### Triggers
 
