@@ -2,6 +2,21 @@
 
 A proof of concept for a GitHub native issue completion agent system that can handle complex projects from issue creation to completion through automated agents.
 
+> **🚀 New here?** Check out the [Quick Start Guide](QUICKSTART.md) to get up and running in 5 minutes!
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Workflow](#workflow)
+- [GitHub Actions Workflows](#github-actions-workflows)
+- [Issue Dependency Management](#issue-dependency-management)
+- [Setup Instructions](#setup-instructions)
+- [Example Issue](#example-issue)
+- [Agent Instructions](#agent-instructions)
+- [Benefits](#benefits)
+- [Architecture](#architecture)
+- [Documentation](#documentation)
+
 ## Overview
 
 This system implements an automated workflow where GitHub Issues are automatically worked on by AI agents that create PRs, review code, address feedback, and manage dependencies between issues.
@@ -167,6 +182,16 @@ Dependent issues labeled "ready"
     ↓
 Cycle continues...
 ```
+
+## Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
+- **[EXAMPLE.md](EXAMPLE.md)** - Complete walkthrough of a multi-issue project
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to work with the agent system
+- **[LICENSE](LICENSE)** - MIT License
+- **Agent Instructions:**
+  - [Agent 1 Instructions](.github/agents/agent-1-instructions.md)
+  - [Agent 2 Instructions](.github/agents/agent-2-instructions.md)
 
 ## Future Enhancements
 
